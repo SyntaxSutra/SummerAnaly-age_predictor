@@ -1,0 +1,58 @@
+import pandas as pd
+from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import f1_score
+import os
+
+def load_data():
+    train_df = pd.read_csv("data/Train_Data.csv")
+    test_df = pd.read_csv("data/Test_Data.csv")
+    submission_df = pd.read_csv("data/Sample_Submission.csv")
+    return train_df, test_df, submission_df
+
+def preprocess_data(train_df, test_df):
+    train_df = train_df.dropna(subset=["age_group"])
+    train_df["age_group"] = train_df["age_group"].map({"Adult": 0, "Senior": 1})
+
+    features = ['RIAGENDR', 'PAQ605', 'BMXBMI', 'LBXGLU', 'DIQ010', 'LBXGLT', 'LBXIN']
+    X = train_df[features]
+    y = train_df["age_group"]
+    X_test = test_df[features]
+
+    return X, y, X_test
+
+def build_pipeline():
+    return Pipeline([
+        ("imputer", SimpleImputer(strategy="median")),
+        ("scaler", StandardScaler()),
+        ("classifier", RandomForestClassifier(n_estimators=200, class_weight='balanced', random_state=42))
+    ])
+
+def train_and_evaluate(pipeline, X, y):
+    X_train, X_val, y_train, y_val = train_test_split(X, y, stratify=y, test_size=0.2, random_state=42)
+    pipeline.fit(X_train, y_train)
+    y_pred = pipeline.predict(X_val)
+    score = f1_score(y_val, y_pred)
+    print(f"✅ Validation F1 Score: {score:.4f}")
+    return pipeline
+
+def predict_and_save(pipeline, X_test, submission_df):
+    predictions = pipeline.predict(X_test)
+    submission_df["age_group"] = predictions
+    submission_df["age_group"] = submission_df["age_group"].map({0: "Adult", 1: "Senior"})
+    output_path = "Final_Submission.csv"
+    submission_df.to_csv(output_path, index=False)
+    print(f"📁 Final predictions saved to {output_path}")
+
+def main():
+    train_df, test_df, submission_df = load_data()
+    X, y, X_test = preprocess_data(train_df, test_df)
+    pipeline = build_pipeline()
+    pipeline = train_and_evaluate(pipeline, X, y)
+    predict_and_save(pipeline, X_test, submission_df)
+
+if __name__ == "__main__":
+    main()
