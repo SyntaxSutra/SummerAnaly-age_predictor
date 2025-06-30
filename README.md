@@ -1,51 +1,49 @@
-# SummerAnaly-age_predictor 
-import pandas as pd
-from sklearn.impute import SimpleImputer
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import f1_score
 
-# === Load Data ===
-train_df = pd.read_csv("C:\\Users\\HP\\Downloads\\Train_Data.csv")
-test_df = pd.read_csv("C:\\Users\\HP\\Downloads\\Test_Data.csv")
-sample_submission = pd.read_csv("C:\\Users\\HP\\Downloads\\Sample_Submission.csv")
+# 🧠 Age Group Prediction from Health Indicators
 
-# === Clean Data ===
-train_df = train_df.dropna(subset=["age_group"])
-train_df["age_group"] = train_df["age_group"].map({"Adult": 0, "Senior": 1})
+This project predicts whether an individual belongs to the **Adult** or **Senior** age group using various health-related features from survey data.
 
-# === Feature Selection ===
-features = ['RIAGENDR', 'PAQ605', 'BMXBMI', 'LBXGLU', 'DIQ010', 'LBXGLT', 'LBXIN']
-X = train_df[features]
-y = train_df["age_group"]
-X_test_final = test_df[features]
+---
 
-# === Train-Validation Split ===
-X_train, X_val, y_train, y_val = train_test_split(X, y, stratify=y, test_size=0.2, random_state=42)
+## 📁 Dataset
 
-# === Build Pipeline ===
-pipeline = Pipeline([
-    ("imputer", SimpleImputer(strategy="median")),
-    ("scaler", StandardScaler()),
-    ("classifier", RandomForestClassifier(n_estimators=200, class_weight='balanced', random_state=42))
-])
+The dataset is split into three CSV files located in the `data/` folder:
 
-# === Train Model ===
-pipeline.fit(X_train, y_train)
+- `Train_Data.csv`: Contains training data with features and labeled `age_group`.
+- `Test_Data.csv`: Contains test data (no `age_group`).
+- `Sample_Submission.csv`: Template for model predictions (submission format).
 
-# === Validate Model ===
-y_pred_val = pipeline.predict(X_val)
-f1 = f1_score(y_val, y_pred_val)
-print("✅ Validation F1 Score:", f1)
+---
 
-# === Predict on Test Set ===
-test_predictions = pipeline.predict(X_test_final)
+## 🚀 Project Workflow
 
-# === Save Submission ===
-sample_submission["age_group"] = test_predictions
-sample_submission["age_group"] = sample_submission["age_group"].map({0: "Adult", 1: "Senior"})
-sample_submission.to_csv("C:\\Users\\HP\\Downloads\\Final_Submission.csv", index=False)
+1. **Load Data**  
+   Load training, testing, and sample submission datasets.
 
-print("📁 ASSIGNMENT.csv saved successfully at: C:\\Users\\ASUS\\Downloads\\ASSIGNMENT.csv")
+2. **Preprocess**  
+   - Drop missing `age_group` values.
+   - Encode labels: `"Adult"` → `0`, `"Senior"` → `1`
+   - Select relevant features
+
+3. **Model Pipeline**
+   - `SimpleImputer`: Fill missing values using median
+   - `StandardScaler`: Normalize features
+   - `RandomForestClassifier`: Build a robust ensemble model
+
+4. **Evaluate**
+   - Perform train-validation split
+   - Calculate F1 score for performance evaluation
+
+5. **Predict**
+   - Predict on test data
+   - Save predictions in required format (`ASSIGNMENT.csv`)
+
+---
+
+## 📦 Installation
+
+Make sure you have Python 3.7+ installed. Then run:
+
+```bash
+pip install -r requirements.txt
+
